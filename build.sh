@@ -1,2 +1,2 @@
 #! /bin/sh
-docker build -t mpaganini/alpine-subsonic .
+docker build -t antonem/alpine-subsonic .
