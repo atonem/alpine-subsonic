@@ -1,17 +1,17 @@
-FROM alpine
+FROM alpine:3.5
 
-MAINTAINER paganini@paganini.net
+MAINTAINER antemm@gmail.com
 
 # Desired UID & GID
 ENV SUBSONIC_UID=10000
 ENV SUBSONIC_GID=10000
 ENV SUBSONIC_HOME=/usr/share/subsonic
 ENV SUBSONIC_DATA=/var/subsonic
-ENV SUBSONIC_VERSION 6.0
+ENV SUBSONIC_DEFAULT_MUSIC_FOLDER=/var/music
+ENV SUBSONIC_VERSION=6.1.beta2
 
 # Add subsonic tar.gz
-ADD http://subsonic.org/download/subsonic-${SUBSONIC_VERSION}-standalone.tar.gz /tmp/subsonic.tar.gz
-
+ADD https://s3-eu-west-1.amazonaws.com/subsonic-public/download/subsonic-${SUBSONIC_VERSION}-standalone.tar.gz /tmp/subsonic.tar.gz
 # - Create a new group 'subsonic' with SUBSONIC_GID, home $SUBSONIC_HOME
 # - Create user 'subsonic' with SUBSONIC_UID, add to that group.
 # - Create $SUBSONIC_HOME
@@ -44,6 +44,7 @@ RUN mkdir -p $SUBSONIC_DATA/transcode && \
     ln /usr/bin/ffmpeg /usr/bin/lame $SUBSONIC_DATA/transcode
 
 VOLUME $SUBSONIC_DATA
+VOLUME $SUBSONIC_DEFAULT_MUSIC_FOLDER
 
 EXPOSE 4040
 
