@@ -23,6 +23,13 @@ SUBSONIC_DEFAULT_PLAYLIST_FOLDER=${SUBSONIC_HOME}/playlists
 
 SUBSONIC_USER=subsonic
 
+# MySQL variables
+SUBSONIC_MYSQL_PORT=3306
+SUBSONIC_MYSQL_USER=subsonic
+SUBSONIC_MYSQL_PASSWORD=subsonic
+SUBSONIC_MYSQL_DATABASE=subsonic
+SUBSONIC_MYSQL_ENCODING=UTF-8
+
 export LANG=POSIX
 export LC_ALL=en_US.UTF-8
 
@@ -53,6 +60,12 @@ usage() {
     echo "                                only has effect the first time Subsonic is started. Default '/var/music/Podcast'"
     echo "  --default-playlist-folder=DIR Configure Subsonic to use this folder for playlists.  This option "
     echo "                                only has effect the first time Subsonic is started. Default '/var/playlists'"
+    echo "  --mysql-host=HOST             Set external mysql server host. If set the -Dsubsonic.db will be added."
+    echo "  --mysql-port=PORT             Set external mysql server port. Default: 3306."
+    echo "  --mysql-user=USER             The user for mysql. Default: subsonic."
+    echo "  --mysql-password=PASSWORD     The password for mysql. Default: subsonic."
+    echo "  --mysql-database=DATABASE     The database for mysql. Default: subsonic."
+    echo "  --mysql-encoding=ENCODING     The character encroding for mysql. Default: UTF-8."
     exit 1
 }
 
@@ -90,14 +103,23 @@ while [ $# -ge 1 ]; do
         --quiet)
             quiet=1
             ;;
-        --default-music-folder=?*)
-            SUBSONIC_DEFAULT_MUSIC_FOLDER=${1#--default-music-folder=}
+        --mysql-host=?*)
+            SUBSONIC_MYSQL_HOST=${1#--mysql-host=}
             ;;
-        --default-podcast-folder=?*)
-            SUBSONIC_DEFAULT_PODCAST_FOLDER=${1#--default-podcast-folder=}
+        --mysql-port=?*)
+            SUBSONIC_MYSQL_PORT=${1#--mysql-port=}
             ;;
-        --default-playlist-folder=?*)
-            SUBSONIC_DEFAULT_PLAYLIST_FOLDER=${1#--default-playlist-folder=}
+        --mysql-user=?*)
+            SUBSONIC_MYSQL_USER=${1#--mysql-user=}
+            ;;
+        --mysql-password=?*)
+            SUBSONIC_MYSQL_PASSWORD=${1#--mysql-password=}
+            ;;
+        --mysql-database=?*)
+            SUBSONIC_MYSQL_DATABASE=${1#--mysql-database=}
+            ;;
+        --mysql-charset=?*)
+            SUBSONIC_MYSQL_ENCODING=${1#--mysql-charset=}
             ;;
         *)
             usage
@@ -105,6 +127,13 @@ while [ $# -ge 1 ]; do
     esac
     shift
 done
+
+# Check external mysql arg
+if [[ -z "${SUBSONIC_MYSQL_HOST}" ]]; then
+    SUBSONIC_MYSQL_ARG=""
+else
+    SUBSONIC_MYSQL_ARG="jdbc:mysql://${SUBSONIC_MYSQL_HOST}:${SUBSONIC_MYSQL_PORT}/${SUBSONIC_MYSQL_DATABASE}?user=${SUBSONIC_MYSQL_USER}&password=${SUBSONIC_MYSQL_PASSWORD}&characterEncoding=${SUBSONIC_MYSQL_ENCODING}"
+fi
 
 # Create Subsonic home directory.
 mkdir -p \
@@ -128,6 +157,7 @@ exec /usr/bin/java -Xmx${SUBSONIC_MAX_MEMORY}m \
     -Dsubsonic.defaultMusicFolder=${SUBSONIC_DEFAULT_MUSIC_FOLDER} \
     -Dsubsonic.defaultPodcastFolder=${SUBSONIC_DEFAULT_PODCAST_FOLDER} \
     -Dsubsonic.defaultPlaylistFolder=${SUBSONIC_DEFAULT_PLAYLIST_FOLDER} \
+    -Dsubsonic.db=${SUBSONIC_MYSQL_ARG} \
     -Djava.awt.headless=true \
     -verbose:gc \
     -jar subsonic-booter-jar-with-dependencies.jar >> ${LOG} 2>&1
